@@ -1,10 +1,10 @@
 // Import Dependencies
 // =======================================================
-const url = require("url");
-const https = require("https");
-const http = require("http");
-const fs = require("fs");
-const stringDecoder = require("string_decoder").StringDecoder;
+const url = require("node:url").URL;
+const http = require("node:http");
+const fs = require("node:fs");
+const stringDecoder = require("node:string_decoder").StringDecoder;
+const queryString = require("node:querystring")
 const configuration = require("./config");
 const { getImages, ping, notFound } = require("./misc");
 const { user, code } = require("./verifyUser");
@@ -31,12 +31,6 @@ server["serverOptions"] = {
 
 // https Server
 // =======================================================
-server["HTTPSserver"] = https.createServer(server.serverOptions, (req, res) => {
-    server.unifiedServer(req, res);
-});
-
-// https Server
-// =======================================================
 server["HTTPserver"] = http.createServer((req, res) => {
     server.unifiedServer(req, res);
 });
@@ -45,10 +39,10 @@ server["HTTPserver"] = http.createServer((req, res) => {
 // =======================================================
 server["unifiedServer"] = (req, res) => {
     // Get URL
-    const parsedUrl = url.parse(req.url, true);
+    const _url = new url(req.url, `http://${req.header.host}`)
 
     // Get Url Path
-    const path = parsedUrl.pathname;
+    const path = _url.pathname;
     const trimmedPath = path.replace(/^\/+|\/+$/g, "");
 
     // Get Header
@@ -58,7 +52,7 @@ server["unifiedServer"] = (req, res) => {
     const method = req.method.toLowerCase();
 
     // Get Query Strings
-    const queryStringObject = parsedUrl.query;
+    const queryStringObject = queryString.parse(_url.search.replace("?", ""));
 
     // Get Payload
     const decoder = new stringDecoder("utf8");
@@ -182,10 +176,6 @@ server["SERVER_init"] = () => {
     // Listen
     server.HTTPserver.listen(configuration.HTTP_port, () => {
         console.log("HTTP Server is Listening On Port " + configuration.HTTP_port + " in " + configuration.mode + " mode");
-    });
-
-    server.HTTPSserver.listen(configuration.HTTPS_port, () => {
-        console.log("HTTPS Server is Listening On Port " + configuration.HTTPS_port + " in " + configuration.mode + " mode");
     });
 };
 
